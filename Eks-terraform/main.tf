@@ -21,27 +21,24 @@ resource "aws_iam_role_policy_attachment" "example-AmazonEKSClusterPolicy" {
   role       = aws_iam_role.example.name
 }
 
-# Replace with your VPC ID
-variable "vpc_id" {
-  description = "The ID of the VPC for which to get subnets"
-  type        = string
+#get vpc data
+data "aws_vpc" "default" {
+  default = true
 }
-
-# Data source to retrieve all subnets in the specified VPC
-data "aws_subnets" "selected" {
+#get public subnets for cluster
+data "aws_subnets" "public" {
   filter {
     name   = "vpc-id"
-    values = [var.vpc_id]
+    values = [data.aws_vpc.default.id]
   }
 }
-
 #cluster provision
 resource "aws_eks_cluster" "example" {
   name     = "EKS_CLOUD"
   role_arn = aws_iam_role.example.arn
 
   vpc_config {
-    subnet_ids = data.aws_subnets.selected.ids[0]
+    subnet_ids = data.aws_subnets.public.ids
   }
 
   # Ensure that IAM Role permissions are created before and deleted after EKS Cluster handling.
